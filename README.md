@@ -4,8 +4,10 @@
 
 An [Obsidian](https://obsidian.md) plugin for tracking countdowns and memorial days — birthdays, anniversaries — with full **solar & lunar calendar** support (leap months included).
 
-![view1](docs/screenshots/view-1.png)
-![view2](docs/screenshots/view-2.png)
+<p align="center">
+  <img src="docs/screenshots/view-1.png" width="49%" alt="view1">
+  <img src="docs/screenshots/view-2.png" width="49%" alt="view2">
+</p>
 
 ## Features
 

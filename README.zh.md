@@ -4,8 +4,10 @@
 
 一个 [Obsidian](https://obsidian.md) 插件：以列表视图管理倒数日与纪念日，完整支持**公历与农历**（含闰月）。
 
-![view1](docs/screenshots/view-zh-1.png)
-![view2](docs/screenshots/view-zh-2.png)
+<p align="center">
+  <img src="docs/screenshots/view-zh-1.png" width="49%" alt="view1">
+  <img src="docs/screenshots/view-zh-2.png" width="49%" alt="view2">
+</p>
 
 ## 功能
 
