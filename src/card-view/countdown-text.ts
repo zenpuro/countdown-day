@@ -1,4 +1,3 @@
-import type { CalendarType, RepeatRule } from '../date-engine/date-engine';
 import { nextOccurrence, type OccurrenceResult } from '../date-engine/date-engine';
 import type { CountdownEvent } from '../event-store/event';
 import { t } from '../settings-i18n/i18n';
@@ -9,8 +8,8 @@ export function occurrenceOf(event: CountdownEvent, today: Date): OccurrenceResu
 	return nextOccurrence(
 		{
 			date: { y, m, d, leapMonth: event.leapMonth },
-			calendar: event.calendar as CalendarType,
-			repeat: event.repeat as RepeatRule,
+			calendar: event.calendar,
+			repeat: event.repeat,
 			...(event.repeat === 'custom' && event.repeatEvery !== undefined
 				? { repeatEvery: event.repeatEvery }
 				: {}),

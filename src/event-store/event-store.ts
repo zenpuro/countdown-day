@@ -178,18 +178,18 @@ export class EventStore {
 		return newPath;
 	}
 
-	/** Move an event file to the system trash (.trash fallback per user setting). */
+	/** Move an event file to trash per the user's deletion preference. */
 	async deleteEvent(path: string): Promise<void> {
 		const file = this.app.vault.getFileByPath(path);
 		if (!file) return;
-		await this.app.vault.trash(file, true);
+		await this.app.fileManager.trashFile(file);
 	}
 
 	/** Pin/unpin an event (frontmatter `pinned: true`; key removed when unpinning). */
 	async setPinned(path: string, pinned: boolean): Promise<void> {
 		const file = this.app.vault.getFileByPath(path);
 		if (!file) return;
-		await this.app.fileManager.processFrontMatter(file, (fm) => {
+		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 			if (pinned) fm['pinned'] = true;
 			else delete fm['pinned'];
 		});
@@ -197,7 +197,7 @@ export class EventStore {
 	}
 
 	private async writeEvent(file: TFile, input: EventInput): Promise<void> {
-		await this.app.fileManager.processFrontMatter(file, (fm) => {
+		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 			applyEventToRecord(fm, input);
 		});
 	}

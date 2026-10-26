@@ -1,4 +1,4 @@
-import { isValidLunarDate, REPEAT_RULES, type CalendarType, type RepeatRule } from '../date-engine/date-engine';
+import { isValidLunarDate, REPEAT_RULES } from '../date-engine/date-engine';
 import { EVENT_TYPES, type CountdownEvent } from './event';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

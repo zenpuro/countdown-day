@@ -86,13 +86,12 @@ export function attachSheetDragToClose(modal: Modal): void {
 			if (dy <= DECISION_PX) return;
 			dragging = true;
 			// take over from the open animation; follow the finger 1:1
-			sheet.style.transition = 'none';
-			sheet.style.willChange = 'transform';
+			sheet.setCssStyles({ transition: 'none', willChange: 'transform' });
 		}
 		e.preventDefault();
 		// the gesture is ours: hide it from Obsidian's edge-swipe handlers
 		e.stopPropagation();
-		sheet.style.transform = `translateY(${Math.max(dy, 0)}px)`;
+		sheet.setCssStyles({ transform: `translateY(${Math.max(dy, 0)}px)` });
 	};
 
 	const onTouchEnd = (): void => {
@@ -102,19 +101,16 @@ export function attachSheetDragToClose(modal: Modal): void {
 		dragging = false;
 		const flick = velocity > 0.5 && dy > 24;
 		if (dy >= dismissPx() || flick) {
-			sheet.style.transition = 'transform 0.18s ease-in';
-			sheet.style.transform = 'translateY(100%)';
+			sheet.setCssStyles({ transition: 'transform 0.18s ease-in', transform: 'translateY(100%)' });
 			window.setTimeout(() => {
 				// guard: the sheet may have been closed another way mid-animation
 				if (modal.containerEl.isConnected) modal.close();
 			}, 170);
 			return;
 		}
-		sheet.style.transition = 'transform 0.2s ease';
-		sheet.style.transform = '';
+		sheet.setCssStyles({ transition: 'transform 0.2s ease', transform: '' });
 		window.setTimeout(() => {
-			sheet.style.transition = '';
-			sheet.style.willChange = '';
+			sheet.setCssStyles({ transition: '', willChange: '' });
 		}, 220);
 	};
 

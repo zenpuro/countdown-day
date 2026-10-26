@@ -8,6 +8,8 @@ export default defineConfig({
 	test: {
 		environment: 'jsdom',
 		include: ['tests/**/*.test.ts'],
+		// installs the obsidian runtime stubs (globals + HTMLElement methods)
+		setupFiles: ['./tests/mocks/obsidian.ts'],
 	},
 	resolve: {
 		alias: [

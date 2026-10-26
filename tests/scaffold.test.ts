@@ -10,7 +10,7 @@ describe('plugin manifest', () => {
 	it('declares id "countdown-day" and isDesktopOnly false', () => {
 		const manifest = JSON.parse(
 			readFileSync(join(process.cwd(), 'manifest.json'), 'utf-8'),
-		);
+		) as { id: string; isDesktopOnly: boolean };
 
 		expect(manifest.id).toBe('countdown-day');
 		expect(manifest.isDesktopOnly).toBe(false);

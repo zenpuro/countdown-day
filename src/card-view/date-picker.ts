@@ -1,4 +1,4 @@
-import { lunarToSolar, solarToLunar } from '../date-engine/date-engine';
+import { solarToLunar } from '../date-engine/date-engine';
 import type { CalendarType } from '../date-engine/date-engine';
 import { lunarDayLabel, lunarMonthLabel } from './date-display';
 import { t } from '../settings-i18n/i18n';

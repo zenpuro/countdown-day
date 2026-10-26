@@ -1,7 +1,8 @@
 /**
  * Runtime stub for the `obsidian` package (it ships typings only, no JS
- * entry). Modules under test import only types/constructors from it; DOM
- * helpers used in tests (createDiv etc.) come from the jsdom environment.
+ * entry). Includes the DOM helper exports src/ imports (createEl family)
+ * and the HTMLElement prototype augmentations Obsidian injects at runtime
+ * (setCssStyles) so view-rendering code paths run under jsdom.
  */
 export class App {}
 
@@ -55,3 +56,55 @@ export class Setting {
 		return this;
 	}
 }
+
+/* ---- DOM helpers ----
+ * Obsidian injects `createEl`/`createDiv`/`createSpan` as globals and as
+ * HTMLElement methods at runtime, and augments `setCssStyles`. Types come
+ * from obsidian.d.ts; these stubs provide the runtime behavior under jsdom.
+ */
+
+type DomElementInfo = { cls?: string; text?: string; attr?: Record<string, string> };
+
+function applyInfo<T extends HTMLElement>(el: T, o?: DomElementInfo | string): T {
+	if (typeof o === 'string') el.className = o;
+	else if (o) {
+		if (o.cls) el.className = o.cls;
+		if (o.text !== undefined) el.textContent = o.text;
+		if (o.attr) for (const [k, v] of Object.entries(o.attr)) el.setAttribute(k, v);
+	}
+	return el;
+}
+
+function makeEl<K extends keyof HTMLElementTagNameMap>(
+	tag: K,
+	o?: DomElementInfo | string,
+): HTMLElementTagNameMap[K] {
+	return applyInfo(document.createElement(tag), o);
+}
+
+const g = globalThis as unknown as Record<string, unknown>;
+
+g.createEl ??= (tag: keyof HTMLElementTagNameMap, o?: DomElementInfo | string) => makeEl(tag, o);
+g.createDiv ??= (o?: DomElementInfo | string) => makeEl('div', o);
+g.createSpan ??= (o?: DomElementInfo | string) => makeEl('span', o);
+
+const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
+
+proto.createEl ??= function (this: HTMLElement, tag: keyof HTMLElementTagNameMap, o?: DomElementInfo | string) {
+	const el = makeEl(tag, o);
+	this.append(el);
+	return el;
+};
+proto.createDiv ??= function (this: HTMLElement, o?: DomElementInfo | string) {
+	const el = makeEl('div', o);
+	this.append(el);
+	return el;
+};
+proto.createSpan ??= function (this: HTMLElement, o?: DomElementInfo | string) {
+	const el = makeEl('span', o);
+	this.append(el);
+	return el;
+};
+proto.setCssStyles ??= function (this: HTMLElement, styles: Partial<CSSStyleDeclaration>) {
+	Object.assign(this.style, styles);
+};

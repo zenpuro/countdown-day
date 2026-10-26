@@ -1,6 +1,6 @@
 import esbuild from 'esbuild';
 import process from 'node:process';
-import builtins from 'builtin-modules';
+import { builtinModules } from 'node:module';
 
 const banner = `/*
 Countdown Day — an Obsidian plugin for tracking countdowns and memorial days
@@ -14,7 +14,7 @@ const context = await esbuild.context({
 	banner: { js: banner },
 	entryPoints: ['src/main.ts'],
 	bundle: true,
-	external: ['obsidian', 'electron', '@codemirror/autocomplete', ...builtins],
+	external: ['obsidian', 'electron', '@codemirror/autocomplete', ...builtinModules],
 	format: 'cjs',
 	target: 'es2018',
 	charset: 'utf8',

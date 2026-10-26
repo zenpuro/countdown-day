@@ -40,7 +40,7 @@ class NoteSuggestModal extends FuzzySuggestModal<TFile> {
 	}
 
 	onOpen(): void {
-		super.onOpen();
+		void super.onOpen();
 		// no ✕ in the sheet family — Esc / click-outside still close it
 		removeNativeCloseButton(this);
 		mountModalInTab(this);

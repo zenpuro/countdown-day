@@ -43,7 +43,11 @@ export function suppressImeKeydown(input: HTMLInputElement): void {
 	input.addEventListener(
 		'keydown',
 		(evt: KeyboardEvent) => {
-			if (evt.isComposing || evt.keyCode === 229) {
+			// keyCode 229 is the only reliable composition signal on engines
+			// that report isComposing=false for composition keydowns (e.g.
+			// Safari); there is no standard replacement for it.
+			const legacyKeyCode = (evt as unknown as { keyCode: number }).keyCode;
+			if (evt.isComposing || legacyKeyCode === 229) {
 				evt.stopPropagation();
 			}
 		},

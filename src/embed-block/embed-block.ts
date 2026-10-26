@@ -86,7 +86,7 @@ export function renderEmbed(el: HTMLElement, options: RenderEmbedOptions): void 
 	const parsed = parseEmbedOptions(options.source);
 
 	if (parsed.warnings.length > 0) {
-		const warning = document.createElement('div');
+		const warning = createDiv();
 		warning.className = 'countdown-embed__warning';
 		warning.textContent = t('embed-block.invalidOptions', {
 			lines: parsed.warnings.join('; '),
@@ -103,14 +103,14 @@ export function renderEmbed(el: HTMLElement, options: RenderEmbedOptions): void 
 	if (parsed.limit !== null) events = events.slice(0, parsed.limit);
 
 	if (events.length === 0) {
-		const empty = document.createElement('div');
+		const empty = createDiv();
 		empty.className = 'countdown-embed__empty';
 		empty.textContent = t('embed-block.empty');
 		el.append(empty);
 		return;
 	}
 
-	const grid = document.createElement('div');
+	const grid = createDiv();
 	grid.className = 'countdown-grid countdown-embed__grid';
 	for (const event of events) {
 		const card = createEventCardEl(event, { actions: false });

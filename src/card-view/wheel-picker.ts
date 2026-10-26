@@ -88,7 +88,7 @@ export class WheelColumn {
 
 	constructor(options: readonly WheelOption[], selectedIndex: number, onChange: (index: number) => void) {
 		this.onChange = onChange;
-		this.el = document.createElement('div');
+		this.el = createDiv();
 		this.el.className = 'countdown-wheel';
 
 		this.scrollEl = this.el.createDiv({ cls: 'countdown-wheel__scroll' });
@@ -112,8 +112,8 @@ export class WheelColumn {
 		// sync first (works whenever layout exists), then re-assert after two
 		// frames — some mobile webviews reset scroll while the sheet animates in
 		this.scrollEl.scrollTop = this.index * WHEEL_ITEM_HEIGHT;
-		requestAnimationFrame(() =>
-			requestAnimationFrame(() => this.scrollToIndex(this.index, false)),
+		window.requestAnimationFrame(() =>
+			window.requestAnimationFrame(() => this.scrollToIndex(this.index, false)),
 		);
 	}
 

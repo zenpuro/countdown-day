@@ -39,14 +39,14 @@ export function createEventRowEl(
 	event: CountdownEvent,
 	opts: CreateCardOptions = {},
 ): HTMLElement {
-	const swipe = document.createElement('div');
+	const swipe = createDiv();
 	swipe.className = 'countdown-card-swipe';
 
-	const actions = document.createElement('div');
+	const actions = createDiv();
 	actions.className = 'countdown-card-swipe__actions';
 
 	const revealButton = (label: string, extraCls: string, onClick: () => void): void => {
-		const button = document.createElement('button');
+		const button = createEl('button');
 		button.className = `countdown-card-swipe__action${extraCls}`;
 		button.textContent = label;
 		button.addEventListener('click', () => {
@@ -180,7 +180,7 @@ export function createEventCardEl(
 	const expired = occurrence.next === null && event.type !== 'anniversary';
 	const parts = countdownParts(occurrence);
 
-	const card = document.createElement('div');
+	const card = createDiv();
 	card.classList.add('countdown-card');
 	if (expired) card.classList.add('countdown-card--expired');
 	if (event.pinned) card.classList.add('countdown-card--pinned');
@@ -194,19 +194,19 @@ export function createEventCardEl(
 		card.classList.add('countdown-card--highlight');
 	}
 
-	const body = document.createElement('div');
+	const body = createDiv();
 	body.className = 'countdown-card__body';
 
-	const nameRow = document.createElement('div');
+	const nameRow = createDiv();
 	nameRow.className = 'countdown-card__name-row';
 
-	const name = document.createElement('div');
+	const name = createDiv();
 	name.className = 'countdown-card__name';
 	name.textContent = event.name;
 	nameRow.append(name);
 
 	if (event.pinned) {
-		const badge = document.createElement('span');
+		const badge = createSpan();
 		badge.className = 'countdown-card__pin-badge';
 		badge.textContent = t('card-view.pinBadge');
 		nameRow.append(badge);
@@ -214,28 +214,28 @@ export function createEventCardEl(
 
 	body.append(nameRow);
 
-	const meta = document.createElement('div');
+	const meta = createDiv();
 	meta.className = 'countdown-card__meta';
 	meta.textContent = eventDateLine(event, occurrence);
 	body.append(meta);
 
 	card.append(body);
 
-	const count = document.createElement('div');
+	const count = createDiv();
 	count.className = 'countdown-card__count';
 
-	const prefix = document.createElement('span');
+	const prefix = createSpan();
 	prefix.className = 'countdown-card__prefix';
 	prefix.textContent = countdownPrefix(parts.kind);
 	count.append(prefix);
 
 	if (parts.days !== null) {
-		const days = document.createElement('span');
+		const days = createSpan();
 		days.className = 'countdown-card__days';
 		days.textContent = String(parts.days);
 		count.append(days);
 
-		const unit = document.createElement('span');
+		const unit = createSpan();
 		unit.className = 'countdown-card__unit';
 		unit.textContent = t('card-view.unit.day');
 		count.append(unit);
@@ -244,13 +244,13 @@ export function createEventCardEl(
 	card.append(count);
 
 	if (opts.actions !== false) {
-		const actions = document.createElement('div');
+		const actions = createDiv();
 		actions.className = 'countdown-card__actions';
 
 		// no aria-label on these: the visible text already names the button,
 		// and Obsidian renders aria-label as a hover tooltip
 		const addAction = (label: string, onClick: () => void): void => {
-			const button = document.createElement('button');
+			const button = createEl('button');
 			button.className = 'countdown-card__action';
 			button.textContent = label;
 			button.addEventListener('click', () => onClick());
