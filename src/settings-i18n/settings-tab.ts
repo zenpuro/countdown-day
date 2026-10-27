@@ -8,8 +8,22 @@ import {
 import { t } from './i18n';
 import type CountdownDayPlugin from '../main';
 
-/** Folder-path autocomplete for text inputs (official API pattern). */
-class FolderSuggest extends AbstractInputSuggest<string> {
+/**
+ * Folder-path autocomplete for text inputs (official API pattern).
+ *
+ * `onPicked` is mandatory: AbstractInputSuggest.setValue only writes the text
+ * into the input — it never fires TextComponent.onChange, so a picked
+ * suggestion used to look applied while settings kept the last-typed prefix
+ * (lost on the next re-render / restart).
+ */
+export class FolderSuggest extends AbstractInputSuggest<string> {
+	private readonly onPicked: (path: string) => void;
+
+	constructor(app: App, input: HTMLInputElement, onPicked: (path: string) => void) {
+		super(app, input);
+		this.onPicked = onPicked;
+	}
+
 	getSuggestions(inputStr: string): string[] {
 		const needle = inputStr.toLowerCase();
 		return this.app.vault
@@ -29,6 +43,7 @@ class FolderSuggest extends AbstractInputSuggest<string> {
 	selectSuggestion(path: string): void {
 		this.setValue(path);
 		this.close();
+		this.onPicked(path);
 	}
 }
 
@@ -75,14 +90,27 @@ export class CountdownSettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder(this.plugin.settings.eventFolder)
 					.setValue(this.plugin.settings.eventFolder)
-					.onChange((value) => {
-						this.plugin.settings.eventFolder = value.trim();
-						void this.plugin.saveSettings();
-					})
+					.onChange((value) => this.applyFolder(value))
 					.then((component) => {
 						suppressImeKeydown(component.inputEl);
-						new FolderSuggest(this.app, component.inputEl);
+						new FolderSuggest(this.app, component.inputEl, (path) =>
+							this.applyFolder(path),
+						);
 					}),
 			);
+	}
+
+	/**
+	 * Single write path for the folder setting (typed input AND picked
+	 * suggestion): persist, then re-scan the store — refresh() notifies
+	 * subscribers when the scanned folder changed, so the card view updates
+	 * without an Obsidian restart.
+	 */
+	private applyFolder(value: string): void {
+		const folder = value.trim();
+		if (folder === this.plugin.settings.eventFolder) return;
+		this.plugin.settings.eventFolder = folder;
+		void this.plugin.saveSettings();
+		void this.plugin.store.refresh();
 	}
 }

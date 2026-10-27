@@ -43,11 +43,15 @@ function makeStore(files: FakeFile[]) {
 	};
 	const registered: unknown[] = [];
 	const plugin = { registerEvent: (event: unknown) => registered.push(event) };
-	const store = new EventStore(app as never, () => 'Countdowns');
+	let folder = 'Countdowns';
+	const store = new EventStore(app as never, () => folder);
 	return {
 		store,
 		plugin,
 		registered,
+		setFolder(next: string): void {
+			folder = next;
+		},
 		setCacheReady(ready: boolean): void {
 			cacheReady = ready;
 		},
@@ -112,6 +116,51 @@ describe('EventStore.refresh — diff-gated notify', () => {
 		await env.store.refresh();
 		expect(listener).toHaveBeenCalledTimes(1);
 		expect(env.store.getEvents()[0]?.pinned).toBe(true);
+		expect(spy).not.toHaveBeenCalled();
+	});
+});
+
+describe('EventStore.refresh — folder switch (settings change)', () => {
+	it('notifies when the scanned folder changes even if snapshots are equal', async () => {
+		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const env = makeStore([
+			{ path: 'Countdowns/1.md', frontmatter: { ...EVENT_FM } },
+			{ path: 'Other/1.md', frontmatter: { ...EVENT_FM } },
+		]);
+		env.setCacheReady(true);
+		await env.store.refresh();
+		const listener = vi.fn();
+		env.store.subscribe(listener);
+
+		// identical re-scan of the same folder → silent (existing contract)
+		await env.store.refresh();
+		expect(listener).not.toHaveBeenCalled();
+
+		// settings switched the folder → notify even though both folders hold
+		// an identical event shape; the view re-renders on any notification,
+		// so scope switches must fire it (reported: view kept the old folder
+		// until restart)
+		env.setFolder('Other');
+		await env.store.refresh();
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(env.store.getEvents().map((e) => e.path)).toEqual(['Other/1.md']);
+		expect(spy).not.toHaveBeenCalled();
+	});
+
+	it('re-scanning after a switch to an empty folder empties and notifies', async () => {
+		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const env = makeStore([{ path: 'Countdowns/1.md', frontmatter: { ...EVENT_FM } }]);
+		env.setCacheReady(true);
+		await env.store.refresh();
+		expect(env.store.getEvents()).toHaveLength(1);
+
+		const listener = vi.fn();
+		env.store.subscribe(listener);
+		env.setFolder('Missing');
+		await env.store.refresh();
+
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(env.store.getEvents()).toHaveLength(0);
 		expect(spy).not.toHaveBeenCalled();
 	});
 });

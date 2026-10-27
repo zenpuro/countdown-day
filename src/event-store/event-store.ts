@@ -20,6 +20,7 @@ export class EventStore {
 	private readonly app: App;
 	private readonly getFolder: () => string;
 	private events = new Map<string, CountdownEvent>();
+	private lastFolder: string | null = null;
 	private readonly listeners = new Set<EventListener>();
 
 	constructor(app: App, getFolder: () => string) {
@@ -73,9 +74,13 @@ export class EventStore {
 			if (event) next.set(file.path, event);
 		}
 		this.events = next;
-		// only re-render the view when the snapshot actually changed —
-		// refresh() runs on every metadata resolution batch (see register)
-		if (!sameEvents(previous, next)) this.notify();
+		// re-render when the snapshot actually changed — refresh() runs on every
+		// metadata resolution batch (see register) — or when the scanned folder
+		// changed (settings edit): two folders can hold identical events, and
+		// the view must still re-render (paths + empty-state hint follow the
+		// configured folder)
+		if (folder !== this.lastFolder || !sameEvents(previous, next)) this.notify();
+		this.lastFolder = folder;
 	}
 
 	/** Attach vault listeners. Call once from plugin.onload via registerEvent. */

@@ -17,6 +17,15 @@ export class AbstractInputSuggest<T> {
 	getSuggestions(_query: string): T[] {
 		return [];
 	}
+	/** Mirrors the real API: writes the input text only — never fires
+	 * TextComponent.onChange (the regression FolderSuggest.onSelect covers). */
+	setValue(value: string): void {
+		this.inputEl.value = value;
+	}
+	getValue(): string {
+		return this.inputEl.value;
+	}
+	close(): void {}
 }
 
 export class Plugin {}
@@ -37,12 +46,20 @@ export const Platform = { isMobile: false };
 
 /** Stub for settings-tab: CountdownSettingTab extends this at import time. */
 export class PluginSettingTab {
+	containerEl: HTMLElement = document.createElement('div');
 	constructor(
 		public app: App,
 		public plugin: unknown,
 	) {}
 	display(): void {}
 }
+
+/** Captured addText components so tests can drive the onChange callback. */
+export interface MockTextComponent {
+	inputEl: HTMLInputElement;
+	fireChange(value: string): void;
+}
+export const textComponents: MockTextComponent[] = [];
 
 export class Setting {
 	constructor(public containerEl: HTMLElement) {}
@@ -52,7 +69,33 @@ export class Setting {
 	setDesc(_desc: string): this {
 		return this;
 	}
-	addText(_cb: (component: never) => unknown): this {
+	addText(cb: (component: never) => unknown): this {
+		const inputEl = document.createElement('input');
+		let changeCb: ((value: string) => unknown) | null = null;
+		const component = {
+			inputEl,
+			setPlaceholder(): unknown {
+				return component;
+			},
+			setValue(value: string): unknown {
+				inputEl.value = value;
+				return component;
+			},
+			onChange(onChangeCb: (value: string) => unknown): unknown {
+				changeCb = onChangeCb;
+				return component;
+			},
+			// BaseComponent.then is Obsidian's thenable chain hook
+			then(thenCb: (c: unknown) => unknown): unknown {
+				thenCb(component);
+				return component;
+			},
+		};
+		textComponents.push({
+			inputEl,
+			fireChange: (value: string) => changeCb?.(value),
+		});
+		cb(component as never);
 		return this;
 	}
 }
@@ -107,4 +150,7 @@ proto.createSpan ??= function (this: HTMLElement, o?: DomElementInfo | string) {
 };
 proto.setCssStyles ??= function (this: HTMLElement, styles: Partial<CSSStyleDeclaration>) {
 	Object.assign(this.style, styles);
+};
+proto.empty ??= function (this: HTMLElement) {
+	this.textContent = '';
 };
