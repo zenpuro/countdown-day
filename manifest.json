@@ -1,7 +1,7 @@
 {
 	"id": "countdown-day",
 	"name": "Countdown Day",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"minAppVersion": "1.7.2",
 	"description": "Track countdowns and memorial days (solar & lunar) in a list view.",
 	"author": "zenpuro",
