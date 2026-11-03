@@ -6,7 +6,38 @@
  */
 export class App {}
 
-export class Modal {}
+/**
+ * Minimal Modal base: real Obsidian builds containerEl/modalEl/contentEl
+ * before onOpen and drives lifecycle via open()/close(). Sheet-rendering
+ * tests (form-sheets) call onOpen() directly against this structure.
+ */
+export class Modal {
+	app?: App;
+	containerEl: HTMLElement;
+	modalEl: HTMLElement;
+	contentEl: HTMLElement;
+
+	constructor(app?: App) {
+		this.app = app;
+		this.containerEl = document.createElement('div');
+		this.modalEl = document.createElement('div');
+		this.contentEl = document.createElement('div');
+		this.modalEl.appendChild(this.contentEl);
+		this.containerEl.appendChild(this.modalEl);
+	}
+
+	open(): void {
+		this.onOpen();
+	}
+
+	close(): void {
+		this.onClose();
+	}
+
+	onOpen(): void {}
+
+	onClose(): void {}
+}
 
 /** Minimal base so FolderSuggest (settings-tab) can extend it at import time. */
 export class AbstractInputSuggest<T> {
@@ -153,4 +184,13 @@ proto.setCssStyles ??= function (this: HTMLElement, styles: Partial<CSSStyleDecl
 };
 proto.empty ??= function (this: HTMLElement) {
 	this.textContent = '';
+};
+proto.addClass ??= function (this: HTMLElement, ...classes: string[]) {
+	this.classList.add(...classes);
+};
+proto.removeClass ??= function (this: HTMLElement, ...classes: string[]) {
+	this.classList.remove(...classes);
+};
+proto.toggleClass ??= function (this: HTMLElement, cls: string, value?: boolean) {
+	this.classList.toggle(cls, value);
 };

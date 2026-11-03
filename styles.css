@@ -484,13 +484,13 @@ body:not(.is-mobile) .countdown-sheet::before {
   color: var(--interactive-accent);
 }
 
-/* custom value row (desktop sheets: 提前 [input] 天) */
+/* custom value row (desktop sheets: 提前 [input] 天 + range hint below) */
 .countdown-sheet__input-row {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.625rem;
-  padding: 1.25rem 1rem 1.5rem;
+  padding: 1.25rem 1rem 0.5rem;
 }
 
 .countdown-sheet__input-row .countdown-form__interval-input {
@@ -501,6 +501,19 @@ body:not(.is-mobile) .countdown-sheet::before {
   border: none;
   border-radius: var(--radius-m);
   box-shadow: none; /* taste-skill-ignore: resets Obsidian's default input frame; the field reads as a filled surface */
+}
+
+/* range hint under the desktop custom-value input (请输入 1–30 之间的整数);
+   turns error-red while the input is out of range */
+.countdown-sheet__hint {
+  margin: 0.25rem 1rem 0.75rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.countdown-sheet__hint.is-error {
+  color: var(--text-error);
 }
 
 /* date sheet: grid picker host */
@@ -529,10 +542,19 @@ body:not(.is-mobile) .countdown-sheet::before {
   gap: 0.25rem;
 }
 
-/* single-value sheets (custom remind/repeat) center one column */
+/* single-value sheets (custom remind/repeat): static 提前/天 frame around
+   one number wheel — scrolling moves only the number, never the frame */
 .countdown-wheels--single {
-  grid-template-columns: minmax(0, 8rem);
+  display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+}
+
+.countdown-wheels--single .countdown-wheel {
+  flex: none;
+  width: 8rem;
 }
 
 .countdown-wheel {
@@ -952,6 +974,26 @@ body.is-mobile
 
 .countdown-sheet .countdown-form__seg.is-active:hover {
   color: var(--text-on-accent);
+}
+
+/* type row: even the shorter singular English labels can outgrow one line —
+   when the track can't fit beside the label, let it drop below the label
+   (full row width) instead of clipping. Short locales (zh) still fit on one
+   line, so nothing changes visually there. */
+.countdown-form .setting-item.countdown-form__row-type {
+  flex-wrap: wrap;
+  row-gap: 0.25rem;
+}
+
+/* match the phone override specificity (see the anatomy comment above):
+   Obsidian's phone CSS stacks .setting-item rows, so the wrap permission
+   must survive at equal-or-higher specificity */
+body.is-mobile
+  .modal
+  .countdown-form
+  .setting-item.countdown-form__row-type {
+  flex-wrap: wrap;
+  row-gap: 0.25rem;
 }
 
 /* date row: calendar toggle + value button */

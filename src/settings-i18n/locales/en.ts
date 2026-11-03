@@ -31,6 +31,11 @@ export const en = {
 	'card-view.form.namePlaceholder.anniversary': 'Anniversary name',
 	'card-view.form.namePlaceholder.birthday': "Their name",
 	'card-view.form.type': 'Type',
+	// form-only: singular + shorter than the plural filter tabs, so the three
+	// segments fit beside the label in English (the row wraps as a fallback)
+	'card-view.form.type.countdown': 'Countdown',
+	'card-view.form.type.anniversary': 'Anniversary',
+	'card-view.form.type.birthday': 'Birthday',
 	'card-view.form.calendar': 'Calendar',
 	'card-view.form.date': 'Date',
 	'card-view.form.repeat': 'Repeat',
@@ -43,6 +48,7 @@ export const en = {
 	'card-view.form.repeat.custom': 'Custom',
 	'card-view.form.repeatEvery.prefix': 'Every',
 	'card-view.form.repeatEvery.unit': 'day(s)',
+	'card-view.form.customValueRange': 'Enter a whole number between {min} and {max}',
 	'card-view.form.note': 'Linked note',
 	'card-view.form.notePick': 'Pick a note',
 	'card-view.form.noteClear': 'Clear',

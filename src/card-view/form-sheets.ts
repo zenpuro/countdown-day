@@ -208,6 +208,9 @@ class WheelDateSheet extends BottomSheetModal {
 
 // ---- custom numeric value sheet (remind day / repeat interval) ----
 
+/** aria-describedby ids for the range hint — one per open sheet. */
+let rangeHintSeq = 0;
+
 interface CustomValueSheetOptions {
 	title: string;
 	/** Inclusive range offered by the wheel/input. */
@@ -217,19 +220,24 @@ interface CustomValueSheetOptions {
 	current: number;
 	/** i18n key for the unit label, e.g. `card-view.form.remind.customUnit`. */
 	unitKey: string;
-	/** i18n key for the value prefix (may render as ''), e.g. 提前 / 每. */
+	/** i18n key for the value prefix (may resolve as ''), e.g. 提前 / 每 —
+	 *  frames the wheel and the desktop input alike. */
 	prefixKey?: string;
 	onConfirmValue: (value: number) => void;
 }
 
 /**
- * Stacked sheet for one numeric choice: touch devices get a scroll wheel,
- * desktop a plain numeric input with the unit label. Header 取消/确定.
+ * Stacked sheet for one numeric choice. Touch devices get a number-only
+ * scroll wheel framed by static prefix/unit labels (提前 [wheel] 天) —
+ * scrolling moves just the number; desktop gets a numeric input between
+ * the same labels plus a visible range hint below it (a silently disabled
+ * 确定 explains nothing). Header 取消/确定. (Exported for tests.)
  */
-class CustomValueSheet extends BottomSheetModal {
+export class CustomValueSheet extends BottomSheetModal {
 	private readonly options: CustomValueSheetOptions;
 	private wheel?: WheelColumn;
 	private input?: HTMLInputElement;
+	private hint?: HTMLElement;
 
 	constructor(app: App, options: CustomValueSheetOptions) {
 		super(app, { title: options.title });
@@ -247,13 +255,21 @@ class CustomValueSheet extends BottomSheetModal {
 				wheelIndexOf(values, String(this.clamp(this.options.current))),
 				() => this.setConfirmEnabled(true),
 			);
+			// 提前 [wheel] 天 — the frame is static; scrolling moves only
+			// the number, so the context never flickers past row by row
 			const wrap = body.createDiv({ cls: 'countdown-wheels countdown-wheels--single' });
+			const prefix = this.prefixText();
+			if (prefix !== '') {
+				wrap.createSpan({ text: prefix, cls: 'countdown-form__interval-label' });
+			}
 			wrap.append(this.wheel.el);
+			wrap.createSpan({
+				text: t(this.options.unitKey as never),
+				cls: 'countdown-form__interval-label',
+			});
 		} else {
 			const row = body.createDiv({ cls: 'countdown-sheet__input-row' });
-			const prefix = this.options.prefixKey
-				? t(this.options.prefixKey as never)
-				: '';
+			const prefix = this.prefixText();
 			if (prefix !== '') {
 				row.createSpan({ text: prefix, cls: 'countdown-form__interval-label' });
 			}
@@ -271,12 +287,30 @@ class CustomValueSheet extends BottomSheetModal {
 			this.input.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter') this.onSheetConfirm();
 			});
+
+			// range hint under the row, visible from the start — the max
+			// (30/99) is otherwise only discoverable by guessing
+			const hintId = `countdown-sheet-range-${++rangeHintSeq}`;
+			this.hint = body.createDiv({
+				cls: 'countdown-sheet__hint',
+				text: t('card-view.form.customValueRange', {
+					min: this.options.min,
+					max: this.options.max,
+				}),
+			});
+			this.hint.setAttribute('id', hintId);
+			this.input.setAttribute('aria-describedby', hintId);
 		}
 	}
 
 	protected onSheetOpened(): void {
 		this.input?.focus();
 		this.input?.select();
+	}
+
+	/** Resolved prefix text ('' when the locale has none, e.g. en remind). */
+	private prefixText(): string {
+		return this.options.prefixKey ? t(this.options.prefixKey as never) : '';
 	}
 
 	private clamp(n: number): number {
@@ -287,6 +321,7 @@ class CustomValueSheet extends BottomSheetModal {
 		const raw = this.input?.value.trim() ?? '';
 		const n = Number(raw);
 		const valid = raw !== '' && Number.isInteger(n) && n >= this.options.min && n <= this.options.max;
+		this.hint?.toggleClass('is-error', !valid);
 		this.setConfirmEnabled(valid);
 	}
 
@@ -413,8 +448,8 @@ export function openRepeatSheet(app: App, options: RepeatSheetOptions): void {
 	new RepeatSheet(app, options).open();
 }
 
-/** Upper bound offered by the custom repeat interval sheet. */
-export const REPEAT_CUSTOM_MAX = 99;
+/** Upper bound offered by the custom repeat interval sheet (31 = a month of days). */
+export const REPEAT_CUSTOM_MAX = 31;
 
 class RepeatSheet extends BottomSheetModal {
 	private readonly options: RepeatSheetOptions;

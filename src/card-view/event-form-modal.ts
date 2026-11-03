@@ -145,13 +145,15 @@ export class EventFormModal extends Modal {
 		// fields live in a padded body under the sticky header
 		const body = contentEl.createDiv({ cls: 'countdown-form__body' });
 
-		// type (segmented) — presets repeat and drives the name placeholder
+		// type (segmented) — presets repeat and drives the name placeholder;
+		// labels are form-only (shorter than the plural filter tabs)
 		const typeSetting = new Setting(body).setName(t('card-view.form.type'));
+		typeSetting.settingEl.addClass('countdown-form__row-type');
 		this.appendSegmented(
 			typeSetting.controlEl,
 			(['countdown', 'anniversary', 'birthday'] as const).map((type) => ({
 				value: type,
-				label: t(`card-view.filter.${type}` as never),
+				label: t(`card-view.form.type.${type}` as never),
 				active: this.state.type === type,
 			})),
 			(value) => {
