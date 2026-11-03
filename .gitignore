@@ -4,9 +4,7 @@ main.js
 .DS_Store
 
 .agents/
-.pi/
 
 AGENTS.md
 CAPABILITY-MAP.md
 SPEC-*.md
-docs/market-submission-checklist.md
