@@ -86,9 +86,19 @@ export function closeOpenSwipe(): void {
 	SwipeState.close = null;
 }
 
+/**
+ * Bind the drag gesture to the row container, not the card: the divider
+ * (border-bottom) and any sub-pixel seam between container and card belong
+ * to the container, and a touch landing there must not leak to Obsidian's
+ * tab-swipe navigation.
+ */
 function attachSwipe(swipe: HTMLElement, card: HTMLElement): void {
 	let startX = 0;
 	let startY = 0;
+	// false while the touch began on the revealed action buttons — those
+	// belong to the buttons (a touchstart close would slide them out from
+	// under the finger and swallow the click)
+	let tracking = false;
 	let dragging = false;
 	let opened = false;
 
@@ -98,11 +108,20 @@ function attachSwipe(swipe: HTMLElement, card: HTMLElement): void {
 	};
 	const close = (): void => {
 		opened = false;
+		swipe.classList.remove('is-open');
 		apply(0, true);
 		if (SwipeState.close === close) SwipeState.close = null;
 	};
 
-	card.addEventListener('touchstart', (e) => {
+	swipe.addEventListener('touchstart', (e) => {
+		if (
+			e.target instanceof Element &&
+			e.target.closest('.countdown-card-swipe__actions') !== null
+		) {
+			tracking = false;
+			return;
+		}
+		tracking = true;
 		const touch = e.touches[0];
 		startX = touch.clientX;
 		startY = touch.clientY;
@@ -111,7 +130,8 @@ function attachSwipe(swipe: HTMLElement, card: HTMLElement): void {
 		closeOpenSwipe();
 	}, { passive: true });
 
-	card.addEventListener('touchmove', (e) => {
+	swipe.addEventListener('touchmove', (e) => {
+		if (!tracking) return;
 		const touch = e.touches[0];
 		const dx = touch.clientX - startX;
 		const dy = touch.clientY - startY;
@@ -128,7 +148,8 @@ function attachSwipe(swipe: HTMLElement, card: HTMLElement): void {
 		apply(translateX, false);
 	}, { passive: false });
 
-	card.addEventListener('touchend', (e) => {
+	swipe.addEventListener('touchend', (e) => {
+		if (!tracking) return;
 		if (dragging) {
 			// swallow the click a drag would produce, and keep the finished
 			// gesture away from Obsidian's swipe navigation
@@ -149,10 +170,19 @@ function attachSwipe(swipe: HTMLElement, card: HTMLElement): void {
 			// tapping the card while open closes it (reveal buttons stay clickable)
 			close();
 		}
+	}, { passive: false });
+
+	// a cancelled touch (system gesture, gesture recognizer takeover…) must
+	// snap back to the pre-drag state instead of leaving the row stranded
+	swipe.addEventListener('touchcancel', () => {
+		if (!tracking) return;
+		tracking = false;
+		dragging = false;
+		apply(opened ? -SWIPE_ACTION_WIDTH : 0, true);
 	});
 
 	// a finished drag must not trigger a click on the row
-	card.addEventListener('click', (e) => {
+	swipe.addEventListener('click', (e) => {
 		if (dragging) {
 			e.stopPropagation();
 			e.preventDefault();
@@ -165,8 +195,8 @@ function attachSwipe(swipe: HTMLElement, card: HTMLElement): void {
 	const swallowPointer = (e: PointerEvent): void => {
 		if (dragging) e.stopPropagation();
 	};
-	card.addEventListener('pointermove', swallowPointer);
-	card.addEventListener('pointerup', swallowPointer);
+	swipe.addEventListener('pointermove', swallowPointer);
+	swipe.addEventListener('pointerup', swallowPointer);
 }
 
 export function createEventCardEl(

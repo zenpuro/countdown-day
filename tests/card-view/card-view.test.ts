@@ -429,6 +429,100 @@ describe('createEventRowEl (swipe wrapper)', () => {
 	});
 });
 
+describe('swipe gesture isolation', () => {
+	/** jsdom has no TouchEvent; the handlers only read these fields. */
+	const touch = (type: string, x: number, y: number, target?: Element): TouchEvent => {
+		const e = new Event(type, { bubbles: true, cancelable: true }) as TouchEvent;
+		const point = { clientX: x, clientY: y, identifier: 1 };
+		Object.defineProperty(e, 'touches', { value: [point] });
+		Object.defineProperty(e, 'changedTouches', { value: [point] });
+		if (target) Object.defineProperty(e, 'target', { value: target });
+		return e;
+	};
+
+	const setup = () => {
+		const row = createEventRowEl(ev({ name: 'a' }), { today: TODAY });
+		const app = createDiv(); // stands in for Obsidian's gesture layer
+		app.append(row);
+		const card = row.querySelector('.countdown-card') as HTMLElement;
+		return { row, app, card };
+	};
+
+	it('drags when the touch starts on the row container (divider area)', () => {
+		const { row, app, card } = setup();
+		const leaked: string[] = [];
+		app.addEventListener('touchmove', () => leaked.push('touchmove'));
+		app.addEventListener('touchend', () => leaked.push('touchend'));
+
+		row.dispatchEvent(touch('touchstart', 200, 100));
+		const move = touch('touchmove', 150, 102); // dx=-50, dy=2 → horizontal drag
+		row.dispatchEvent(move);
+		expect(card.style.transform).toBe('translateX(-50px)');
+		expect(move.defaultPrevented).toBe(true); // list must not scroll
+		row.dispatchEvent(touch('touchend', 150, 102));
+
+		// nothing reached the app-level gesture layer
+		expect(leaked).toEqual([]);
+	});
+
+	it('snaps open past the threshold and back below it', () => {
+		const { row, card } = setup();
+
+		row.dispatchEvent(touch('touchstart', 200, 100));
+		row.dispatchEvent(touch('touchmove', 160, 100));
+		row.dispatchEvent(touch('touchend', 160, 100));
+		expect(row.classList.contains('is-open')).toBe(true);
+		expect(card.style.transform).toBe('translateX(-168px)');
+
+		row.dispatchEvent(touch('touchstart', 200, 100));
+		row.dispatchEvent(touch('touchmove', 195, 100));
+		row.dispatchEvent(touch('touchend', 195, 100));
+		expect(row.classList.contains('is-open')).toBe(false);
+		expect(card.style.transform).toBe('');
+	});
+
+	it('ignores vertical moves (list keeps scrolling)', () => {
+		const { row, app, card } = setup();
+		let leaked = 0;
+		app.addEventListener('touchmove', () => leaked++);
+
+		row.dispatchEvent(touch('touchstart', 200, 100));
+		row.dispatchEvent(touch('touchmove', 202, 140)); // dy dominant
+
+		expect(card.style.transform).toBe('');
+		expect(leaked).toBe(1); // gesture not claimed → app sees it
+	});
+
+	it('snaps back to the pre-drag state on touchcancel', () => {
+		const { row, card } = setup();
+
+		row.dispatchEvent(touch('touchstart', 200, 100));
+		row.dispatchEvent(touch('touchmove', 150, 100));
+		row.dispatchEvent(touch('touchcancel', 150, 100));
+
+		expect(card.style.transform).toBe('');
+		expect(row.classList.contains('is-open')).toBe(false);
+	});
+
+	it('does not claim touches on the revealed action buttons', () => {
+		const { row, card } = setup();
+		// open the row first
+		row.dispatchEvent(touch('touchstart', 200, 100));
+		row.dispatchEvent(touch('touchmove', 160, 100));
+		row.dispatchEvent(touch('touchend', 160, 100));
+
+		const button = row.querySelector('.countdown-card-swipe__action') as HTMLElement;
+		const start = touch('touchstart', 20, 100, button);
+		const end = touch('touchend', 20, 100, button);
+		row.dispatchEvent(start);
+		row.dispatchEvent(end);
+
+		expect(end.defaultPrevented).toBe(false); // click must still fire
+		expect(row.classList.contains('is-open')).toBe(true); // row not closed early
+		expect(card.style.transform).toBe('translateX(-168px)');
+	});
+});
+
 describe('occurrenceOf', () => {
 	it('parses the stored date into the engine input', () => {
 		const occ = occurrenceOf(ev({ date: '2025-12-25', repeat: 'yearly' }), TODAY);
